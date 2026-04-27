@@ -1,0 +1,20 @@
+[
+{
+"category": "Computer Science",
+"title": "Database System Concepts",
+"press": "Machine Industry Press",
+"publishYear": 2023,
+"author": "Silberschatz",
+"price": 88.8,
+"stock": 10
+},
+{
+"category": "Literature",
+"title": "Dream of the Red Chamber",
+"press": "People's Literature Publishing House",
+"publishYear": 2018,
+"author": "Cao Xueqin",
+"price": 59.0,
+"stock": 5
+}
+]

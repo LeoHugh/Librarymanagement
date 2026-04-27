@@ -28,9 +28,6 @@
 
                     <!-- 卡片操作 -->
                     <div style="margin-top: 10px;">
-                        <el-button type="primary" :icon="Edit" @click="this.toModifyInfo.id = card.id, this.toModifyInfo.name = card.name,
-                this.toModifyInfo.department = card.department, this.toModifyInfo.type = card.type,
-                this.modifyCardVisible = true" circle />
                         <el-button type="danger" :icon="Delete" circle
                             @click="this.toRemove = card.id, this.removeCardVisible = true"
                             style="margin-left: 30px;" />
@@ -77,32 +74,7 @@
         </el-dialog>
 
 
-        <!-- 修改信息对话框 -->   
-        <el-dialog v-model="modifyCardVisible" :title="'修改信息(借书证ID: ' + this.toModifyInfo.id + ')'" width="30%"
-            align-center>
-            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
-                姓名：
-                <el-input v-model="toModifyInfo.name" style="width: 12.5vw;" clearable />
-            </div>
-            <div style="margin-left: 2vw; font-weight: bold; font-size: 1rem; margin-top: 20px; ">
-                部门：
-                <el-input v-model="toModifyInfo.department" style="width: 12.5vw;" clearable />
-            </div>
-            <div style="margin-left: 2vw;   font-weight: bold; font-size: 1rem; margin-top: 20px; ">
-                类型：
-                <el-select v-model="toModifyInfo.type" size="middle" style="width: 12.5vw;">
-                    <el-option v-for="type in types" :key="type.value" :label="type.label" :value="type.value" />
-                </el-select>
-            </div>
-
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="modifyCardVisible = false">取消</el-button>
-                    <el-button type="primary" @click="ConfirmModifyCard"
-                        :disabled="toModifyInfo.name.length === 0 || toModifyInfo.department.length === 0">确定</el-button>
-                </span>
-            </template>
-        </el-dialog>
+        
 
         <!-- 删除借书证对话框 -->  
         <el-dialog v-model="removeCardVisible" title="删除借书证" width="30%">
@@ -125,6 +97,22 @@
 import { Delete, Edit, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
+
+function normalizeCardType(type) {
+    if (type === 'Teacher' || type === '教师' || type === 'T') {
+        return '教师'
+    }
+    return '学生'
+}
+
+function normalizeCard(card) {
+    return {
+        id: card.cardId,
+        name: card.name,
+        department: card.department,
+        type: normalizeCardType(card.type)
+    }
+}
 
 export default {
     data() {
@@ -186,21 +174,32 @@ export default {
                     this.newCardVisible = false // 将对话框设置为不可见
                     this.QueryCards() // 重新查询借书证以刷新页面
                 })
-        },
-        ConfirmModifyCard() {
-            // TODO: YOUR CODE HERE
+                .catch(error => {
+                    ElMessage.error(error?.response?.data?.message || "借书证新建失败")
+                })
         },
         ConfirmRemoveCard() {
-            // TODO: YOUR CODE HERE
+            axios.delete(`/card/${this.toRemove}`)
+                .then(() => {
+                    ElMessage.success("借书证删除成功")
+                    this.removeCardVisible = false
+                    this.QueryCards()
+                })
+                .catch(error => {
+                    ElMessage.error(error?.response?.data?.message || "借书证删除失败")
+                })
         },
         QueryCards() {
             this.cards = [] // 清空列表
-            let response = axios.get('/card') // 向/card发出GET请求
+            axios.get('/card') // 向/card发出GET请求
                 .then(response => {
-                    let cards = response.data // 接收响应负载
+                    let cards = response.data?.cards || [] // 接收响应负载
                     cards.forEach(card => { // 对于每个借书证
-                        this.cards.push(card) // 将其加入到列表中
+                        this.cards.push(normalizeCard(card)) // 将其加入到列表中
                     })
+                })
+                .catch(error => {
+                    ElMessage.error(error?.response?.data?.message || "借书证查询失败")
                 })
         }
     },

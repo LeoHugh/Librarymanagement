@@ -17,3 +17,19 @@
 
 运行某个特定的测试
 `mvn -Dtest=LibraryTest#parallelBorrowBookTest clean test`
+
+### 启动后端 Web API（端口 8000）
+
+`mvn spring-boot:run -Dspring-boot.run.main-class=WebApplication`
+
+
+### 启动前端（Vite）
+
+在`librarymanagementsystem-frontend`目录下执行：
+
+`npm install`
+
+`npm run dev`
+
+默认访问地址：
+`http://localhost:5173`

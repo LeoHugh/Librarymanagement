@@ -17,12 +17,19 @@
 
         </div>
 
+        <div style="width:60%;margin: 20px auto 0 auto; display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
+            <el-input v-model="borrowForm.cardId" placeholder="借书证ID" style="width: 180px;" />
+            <el-input v-model="borrowForm.bookId" placeholder="图书ID" style="width: 180px;" />
+            <el-button type="success" @click="BorrowBook">借书</el-button>
+            <el-button type="warning" @click="ReturnBook">还书</el-button>
+        </div>
+
         <!-- 结果表格 -->
         <el-table v-if="isShow" :data="fitlerTableData" height="600"
             :default-sort="{ prop: 'borrowTime', order: 'ascending' }" :table-layout="'auto'"
             style="width: 100%; margin-left: 50px; margin-top: 30px; margin-right: 50px; max-width: 80vw;">
-            <el-table-column prop="cardID" label="借书证ID" />
-            <el-table-column prop="bookID" label="图书ID" sortable />
+            <el-table-column prop="cardId" label="借书证ID" />
+            <el-table-column prop="bookId" label="图书ID" sortable />
             <el-table-column prop="borrowTime" label="借出时间" sortable />
             <el-table-column prop="returnTime" label="归还时间" sortable />
         </el-table>
@@ -33,6 +40,7 @@
 <script>
 import axios from 'axios';
 import { Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 export default {
     data() {
@@ -46,6 +54,10 @@ export default {
             }],
             toQuery: '', // 待查询内容(对某一借书证号进行查询)
             toSearch: '', // 待搜索内容(对查询到的结果进行搜索)
+            borrowForm: {
+                cardId: '',
+                bookId: ''
+            },
             Search
         }
     },
@@ -61,14 +73,58 @@ export default {
         }
     },
     methods: {
+        async BorrowBook() {
+            if (this.borrowForm.cardId === '' || this.borrowForm.bookId === '') {
+                ElMessage.warning('请输入借书证ID和图书ID')
+                return
+            }
+            try {
+                await axios.post('/borrow', {
+                    cardId: Number(this.borrowForm.cardId),
+                    bookId: Number(this.borrowForm.bookId)
+                })
+                ElMessage.success('借书成功')
+                this.toQuery = String(this.borrowForm.cardId)
+                this.QueryBorrows()
+            } catch (error) {
+                ElMessage.error(error?.response?.data?.message || '借书失败')
+            }
+        },
+        async ReturnBook() {
+            if (this.borrowForm.cardId === '' || this.borrowForm.bookId === '') {
+                ElMessage.warning('请输入借书证ID和图书ID')
+                return
+            }
+            try {
+                await axios.post('/borrow/return', {
+                    cardId: Number(this.borrowForm.cardId),
+                    bookId: Number(this.borrowForm.bookId)
+                })
+                ElMessage.success('还书成功')
+                this.toQuery = String(this.borrowForm.cardId)
+                this.QueryBorrows()
+            } catch (error) {
+                ElMessage.error(error?.response?.data?.message || '还书失败')
+            }
+        },
         async QueryBorrows() {
-            this.tableData = [] // 清空列表
-            let response = await axios.get('/borrow', { params: { cardID: this.toQuery } }) // 向/borrow发出GET请求，参数为cardID=this.toQuery
-            let borrows = response.data // 获取响应负载
-            borrows.forEach(borrow => { // 对于每一个借书记录
-                this.tableData.push(borrow) // 将它加入到列表项中
-            });
-            this.isShow = true // 显示结果列表
+            if (this.toQuery === '') {
+                ElMessage.warning('请输入借书证ID')
+                return
+            }
+
+            try {
+                this.tableData = [] // 清空列表
+                let response = await axios.get('/borrow', { params: { cardID: this.toQuery } }) // 向/borrow发出GET请求，参数为cardID=this.toQuery
+                let borrows = response.data.items // 获取响应负载
+                borrows.forEach(borrow => { // 对于每一个借书记录
+                    this.tableData.push(borrow) // 将它加入到列表项中
+                });
+                this.isShow = true // 显示结果列表
+            } catch (error) {
+                ElMessage.error(error?.response?.data?.message || '借书记录查询失败')
+                this.isShow = false
+            }
         }
     }
 }

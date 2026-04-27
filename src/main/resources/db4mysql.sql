@@ -3,7 +3,8 @@ drop table if exists `card`;
 drop table if exists `book`;
 
 create table `book` (
-    `book_id` int not null auto_increment,
+    -- 书籍Id,自增主键
+    `book_id` int not null auto_increment, 
     `category` varchar(63) not null,
     `title` varchar(63) not null,
     `press` varchar(63) not null,
@@ -12,6 +13,7 @@ create table `book` (
     `price` decimal(7, 2) not null default 0.00,
     `stock` int not null default 0,
     primary key (`book_id`),
+    -- 唯一约束，防止重复录入同一本书
     unique (`category`, `press`, `author`, `title`, `publish_year`)
 ) engine=innodb charset=utf8mb4;
 
